@@ -16,7 +16,7 @@ n_batch = 256
 n_gpu_layers = 30
 
 # path to offline downloaded llm model 
-modelpath = "models/llama-2-7b-chat.Q2_K.gguf"
+modelpath = "../models/llama-2-7b-chat.Q2_K.gguf"
 
 
 llm = LlamaCPP(
