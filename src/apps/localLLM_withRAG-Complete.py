@@ -1,3 +1,4 @@
+# Import necessary libraries
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.llms import CTransformers
@@ -11,11 +12,16 @@ from io import BytesIO
 import chainlit as cl
 import sys
 
+
+#print(langchain.__version__)
+#print(chainlit.__version__)
+#print(PyPDF2.__version__)
 # environment for the app
 # conda activate llama2Apps
 # command to run the app
 # chainlit run src/apps/localLLM_withRAG-Complete.py --port 8001 -w
 
+# Prompt Template
 prompt_template = """You are an helpful AI assistant and your name is SAHAYAK. You are kind, gentle and respectful to the user. Your job is to answer the question sent by the user in concise and step by step manner. 
 If you don't know the answer to a question, please don't share false information.
             
@@ -25,14 +31,16 @@ Question: {question}
 Response for Questions asked.
 answer:
 """
-modelpath = "../models/llama-2-7b-chat.Q2_K.gguf"
-
-# model used for converting text/queries to numerical embeddings
+# Model path and embedding model
+modelpath = "../models/llama-2-7b-chat.Q2_K/model.gguf"
 embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
 
+# Initialize embeddings using HuggingFace model
+embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+
+# Model parameters
 # path to store embeddings at vectorstore
 indexpath = "data/vectorstore/"
-
 # number of neural network layers to be transferred to be GPU for computation 
 n_gpu_layers = 10
 n_batch = 256
@@ -41,10 +49,10 @@ config = {'max_new_tokens': 512, 'context_length': 4096,
             'gpu_layers': n_gpu_layers,'batch_size': n_batch,   
             'temperature': 0.1
          }
-# Initialize embeddings using HuggingFace model
-embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+
 
 @cl.cache
+# Load Llama2 model function
 def load_llama2_llm(modelpath):
     """
     Loads a Llama2 language model from the specified model path.
@@ -66,6 +74,7 @@ def load_llama2_llm(modelpath):
 llm = load_llama2_llm(modelpath)
     
 @cl.on_chat_start
+# Actions to be taken once the RAG app starts
 async def factory():
     # loads the data by the user
     files = None
@@ -104,7 +113,7 @@ async def factory():
     ### Create embeddings for the uploaded documents and store in vector store
     # Initialize a text splitter for processing long texts
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, 
-                                                   chunk_overlap=10)
+                                                   chunk_overlap=0)
     # Create documents by splitting the provided texts
     documents = text_splitter.create_documents([pdf_text])
     # Create a Faiss index from the embeddings
@@ -119,11 +128,11 @@ async def factory():
     prompt = PromptTemplate(template=prompt_template,
                        input_variables=['context', 'question'])
     
-    # Creating a retrieval QA chain using the provided llm, chain type, retriever, and prompt
+    # Create a retrievalQA chain using Llama2
     chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",  # Replace with the actual chain type
-        retriever=db.as_retriever(search_kwargs={'k': 1}),  # Assuming vectorstore is used as a retriever
+        retriever=db.as_retriever(search_kwargs={'k': 2}),  # Assuming vectorstore is used as a retriever
         return_source_documents=True,
         chain_type_kwargs={'prompt': prompt}
     )
@@ -135,6 +144,7 @@ async def factory():
     cl.user_session.set("chain", chain)
 
 
+# Actions to be taken once user send the query/message
 @cl.on_message
 async def main(message):
     start_time = datetime.now()

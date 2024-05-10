@@ -17,7 +17,7 @@ from model_utils import load_llama2_llm
 # chainlit run src/apps/localLLM_withRAG.py --port 8001 -w
 
 
-modelpath = "../models/llama-2-7b-chat.Q2_K.gguf"
+modelpath = "../models/llama-2-7b-chat.Q2_K/model.gguf"
 embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
 # Initialize embeddings using HuggingFace model
 embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
