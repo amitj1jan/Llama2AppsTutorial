@@ -1,0 +1,16 @@
+services:
+  local_gpt:
+    image: local_gpt # name of our genAI app
+    ports:
+      - '8001:8001'  # host_port:container_port
+    volumes:
+      - models:/app/models/
+
+volumes:
+  models:
+    name: models
+    driver: local # Define the driver and options under the volume name
+    driver_opts:
+      type: volume
+      device: /mnt/d/Amit/data-science/personal-projects/generativeAI/models/llama-2-7b-chat.Q2_K/
+      o: bind
